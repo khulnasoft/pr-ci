@@ -1,0 +1,68 @@
+name: Coverage Ai
+description: "Runs the Coverage Ai agent to generate tests."
+author: KhulnaSoft
+
+inputs:
+  github_token:
+    description: "GitHub token for authentication"
+    required: true
+  project_language:
+    description: "Language of the project"
+    required: false
+    default: "python"
+  project_root:
+    description: "Root directory of the project"
+    required: false
+    default: "."
+  code_coverage_report_path:
+    description: "Path to the coverage.xml"
+    required: false
+    default: "./coverage.xml"
+  coverage_type:
+    description: "Type of coverage report, e.g. 'cobertura' or 'jacoco'."
+    required: false
+    default: "cobertura"
+  test_command:
+    description: "Command to run tests, e.g. 'pytest --cov=. --cov-report=xml --cov-report=term'"
+    required: true
+  model:
+    description: "LLM model name, e.g. 'gpt-4o'"
+    required: false
+    default: "gpt-4o"
+  max_iterations:
+    description: "Maximum number test generation attempts per test file"
+    required: false
+    default: "3"
+  desired_coverage:
+    description: "Desired coverage percentage"
+    required: false
+    default: "100"
+  run_each_test_separately:
+    description: "Whether the agent should modify the test command to run individual tests"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Run script
+      run: |
+        ${{ github.action_path }}/scripts/run.sh \
+          --pr-number "${{ github.event.pull_request.number }}" \
+          --pr-ref "${{ github.event.pull_request.head.ref }}" \
+          --project-language "${{ inputs.project_language }}" \
+          --project-root "${{ inputs.project_root }}" \
+          --code-coverage-report-path "${{ inputs.code_coverage_report_path }}" \
+          --coverage-type "${{ inputs.coverage_type }}" \
+          --test-command "${{ inputs.test_command }}" \
+          --model "${{ inputs.model }}" \
+          --max-iterations "${{ inputs.max_iterations }}" \
+          --desired-coverage "${{ inputs.desired_coverage }}" \
+          --run-each-test-separately "${{ inputs.run_each_test_separately }}" \
+          --action-path "${{ github.action_path }}" \
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        ACTION_REF: ${{ github.action_ref }}
+        <<: ${{ toJSON(env) }}
+      shell: bash
